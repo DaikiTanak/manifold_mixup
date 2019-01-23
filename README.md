@@ -36,6 +36,9 @@ def mixup_data(alpha=1.0):
         lam = 1.
     return lam
 
+loss_function = nn.CrossEntropyLoss()
+bce_loss = torch.nn.BCELoss()
+
 for epoch in range(EPOCH):
   scheduler.step()
   # Training Phase
@@ -55,7 +58,7 @@ for epoch in range(EPOCH):
           lam = mixup_data(alpha=args.mixup_alpha)
           lam = torch.from_numpy(np.array([lam]).astype('float32')).to(device)
           output, reweighted_target = model(inputs, lam=lam, target=labels)
-          loss = bce_loss(softmax(output), reweighted_target)#mixup_criterion(target_a, target_b, lam)
+          loss = bce_loss(softmax(output), reweighted_target)
 
       train_loss += loss.item()
       optimizer.zero_grad()
