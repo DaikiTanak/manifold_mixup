@@ -38,7 +38,7 @@ for epoch in range(EPOCH):
   # Training Phase
   model.train()
   train_loss = 0
-  for i, train_data in enumerate(tqdm(train_iter)):
+  for i, train_data in enumerate(tqdm(train_loader)):
       inputs, labels = train_data
       inputs = inputs.to(device)
       labels = labels.to(device)
