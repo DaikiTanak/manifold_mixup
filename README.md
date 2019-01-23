@@ -15,7 +15,10 @@ train_loader = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE, shuffle
 - If you wanna use manifold mixup, define model as follows. (let parameter:if_mixup be True)  
 ```
 model = densenet121(if_mixup=True)
-# model = se_resnet18(if_mixup=True)
+```
+or,  
+```
+model = se_resnet18(if_mixup=True)
 ```
 - Otherwise, let parameter:if_mixup be False.
 
