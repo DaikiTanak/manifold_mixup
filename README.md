@@ -1,7 +1,7 @@
 # manifold_mixup
 pytorch implementation of manifold-mixup : https://arxiv.org/abs/1806.05236
 
-This repo includes DenseNet and ResNet.
+This repo includes DenseNet (https://arxiv.org/pdf/1608.06993.pdf), ResNet (https://arxiv.org/abs/1512.03385), and Dual Path Networks (https://arxiv.org/pdf/1707.01629.pdf).
 
 
 ## How to train model?
@@ -19,6 +19,10 @@ model = densenet121(if_mixup=True)
 or,  
 ```
 model = se_resnet18(if_mixup=True)
+```
+or,
+```
+model = dpn98(if_mixup=True)
 ```
 - Otherwise, let parameter:if_mixup be False.
 
