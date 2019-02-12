@@ -21,7 +21,8 @@ class _DenseLayer(nn.Sequential):
         self.drop_rate = drop_rate
 
     def forward(self, x):
-        # nn.sequentilaを継承, forwardする
+        # inheritance:nn.sequentilal
+        # Forwarding channel growth part
         new_features = super(_DenseLayer, self).forward(x)
 
         if self.drop_rate > 0:
