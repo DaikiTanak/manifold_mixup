@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 from collections import OrderedDict
 
+from squeeze_excitation import SELayer
 
 def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True)
@@ -34,25 +35,8 @@ class ShakeShake(torch.autograd.Function):
 
         return beta * grad_output, (1 - beta) * grad_output, None
 
-# SELayer
-# https://github.com/moskomule/senet.pytorch/blob/master/senet/se_resnet.py
-class SELayer(nn.Module):
-    def __init__(self, channel, reduction=16):
-        super(SELayer, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(channel // reduction, channel, bias=False),
-            nn.Sigmoid()
-        )
 
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y.expand_as(x)
-
+# We use squeeze_excitation layer in ResNet.
 class SEBasicBlock(nn.Module):
     expansion = 1
 
@@ -127,7 +111,6 @@ class SEBasicBlock(nn.Module):
 
         return out
 
-
 class SEBottleneck(nn.Module):
     expansion = 4
 
@@ -174,58 +157,6 @@ class SEBottleneck(nn.Module):
         out = self.relu(out)
 
         return out
-
-
-def se_resnet18(num_classes, if_mixup=False, if_shake_shake=False):
-    """Constructs a ResNet-18 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(SEBasicBlock, [2, 2, 2, 2], num_classes=num_classes, mixup_hidden=if_mixup, shake_shake=if_shake_shake)
-    model.avgpool = nn.AdaptiveAvgPool2d(1)
-    return model
-
-
-def se_resnet34(num_classes, if_mixup=False):
-    """Constructs a ResNet-34 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(SEBasicBlock, [3, 4, 6, 3], num_classes=num_classes, mixup_hidden=if_mixup)
-    model.avgpool = nn.AdaptiveAvgPool2d(1)
-    return model
-
-
-def se_resnet50(num_classes, if_mixup=False):
-    """Constructs a ResNet-50 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(SEBottleneck, [3, 4, 6, 3], num_classes=num_classes, mixup_hidden=if_mixup)
-    model.avgpool = nn.AdaptiveAvgPool2d(1)
-    return model
-
-
-def se_resnet101(num_classes, if_mixup=False):
-    """Constructs a ResNet-101 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(SEBottleneck, [3, 4, 23, 3], num_classes=num_classes, mixup_hidden=if_mixup)
-    model.avgpool = nn.AdaptiveAvgPool2d(1)
-    return model
-
-
-def se_resnet152(num_classes, if_mixup=False, if_shake_shake=False):
-    """Constructs a ResNet-152 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(SEBottleneck, [3, 8, 36, 3], num_classes=num_classes, mixup_hidden=if_mixup, shake_shake=if_shake_shake)
-    model.avgpool = nn.AdaptiveAvgPool2d(1)
-    return model
-
-
 
 class ResNet(nn.Module):
     # This ResNet does Manifold-Mixup.
@@ -345,3 +276,54 @@ class ResNet(nn.Module):
             return out
         else:
             return out, target_reweighted
+
+
+
+def se_resnet18(num_classes, if_mixup=False, if_shake_shake=False):
+    """Constructs a ResNet-18 model.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet(SEBasicBlock, [2, 2, 2, 2], num_classes=num_classes, mixup_hidden=if_mixup, shake_shake=if_shake_shake)
+    model.avgpool = nn.AdaptiveAvgPool2d(1)
+    return model
+
+
+def se_resnet34(num_classes, if_mixup=False):
+    """Constructs a ResNet-34 model.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet(SEBasicBlock, [3, 4, 6, 3], num_classes=num_classes, mixup_hidden=if_mixup)
+    model.avgpool = nn.AdaptiveAvgPool2d(1)
+    return model
+
+
+def se_resnet50(num_classes, if_mixup=False):
+    """Constructs a ResNet-50 model.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet(SEBottleneck, [3, 4, 6, 3], num_classes=num_classes, mixup_hidden=if_mixup)
+    model.avgpool = nn.AdaptiveAvgPool2d(1)
+    return model
+
+
+def se_resnet101(num_classes, if_mixup=False):
+    """Constructs a ResNet-101 model.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet(SEBottleneck, [3, 4, 23, 3], num_classes=num_classes, mixup_hidden=if_mixup)
+    model.avgpool = nn.AdaptiveAvgPool2d(1)
+    return model
+
+
+def se_resnet152(num_classes, if_mixup=False, if_shake_shake=False):
+    """Constructs a ResNet-152 model.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    """
+    model = ResNet(SEBottleneck, [3, 8, 36, 3], num_classes=num_classes, mixup_hidden=if_mixup, shake_shake=if_shake_shake)
+    model.avgpool = nn.AdaptiveAvgPool2d(1)
+    return model
