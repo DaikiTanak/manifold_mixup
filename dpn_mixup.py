@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from collections import OrderedDict
 
+from squeeze_excitation import SELayer
 
 def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True)
@@ -11,45 +12,6 @@ def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
-
-# SELayer
-# https://github.com/moskomule/senet.pytorch/blob/master/senet/se_resnet.py
-class SELayer(nn.Module):
-    def __init__(self, channel, reduction=16):
-        super(SELayer, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(channel, channel // reduction, bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(channel // reduction, channel, bias=False),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y.expand_as(x)
-
-
-def dpn92(num_classes=2, if_selayer=False, if_mixup=False):
-    return DPN(num_init_features=64, k_R=96, G=32, k_sec=(3,4,20,3), inc_sec=(16,32,24,128), num_classes=num_classes,
-               if_selayer=if_selayer, if_mixup=if_mixup)
-
-
-def dpn98(num_classes=2, if_selayer=False, if_mixup=False):
-    return DPN(num_init_features=96, k_R=160, G=40, k_sec=(3,6,20,3), inc_sec=(16,32,32,128), num_classes=num_classes,
-                if_selayer=if_selayer, if_mixup=if_mixup)
-
-
-def dpn131(num_classes=2, if_selayer=False, if_mixup=False):
-    return DPN(num_init_features=128, k_R=160, G=40, k_sec=(4,8,28,3), inc_sec=(16,32,32,128), num_classes=num_classes,
-                if_selayer=if_selayer, if_mixup=if_mixup)
-
-
-def dpn107(num_classes=2, if_selayer=False, if_mixup=False):
-    return DPN(num_init_features=128, k_R=200, G=50, k_sec=(4,8,20,3), inc_sec=(20,64,64,128), num_classes=num_classes,
-                if_selayer=if_selayer, if_mixup=if_mixup)
 
 class DualPathBlock(nn.Module):
     def __init__(self, in_chs, num_1x1_a, num_3x3_b, num_1x1_c, increase, Groups, _type='normal', if_selayer=False):
@@ -254,3 +216,24 @@ class DPN(nn.Module):
             out = F.avg_pool2d(features, kernel_size=7).view(features.size(0), -1)
             out = self.classifier(out)
             return out, target_reweighted
+
+
+
+def dpn92(num_classes=2, if_selayer=False, if_mixup=False):
+    return DPN(num_init_features=64, k_R=96, G=32, k_sec=(3,4,20,3), inc_sec=(16,32,24,128), num_classes=num_classes,
+               if_selayer=if_selayer, if_mixup=if_mixup)
+
+
+def dpn98(num_classes=2, if_selayer=False, if_mixup=False):
+    return DPN(num_init_features=96, k_R=160, G=40, k_sec=(3,6,20,3), inc_sec=(16,32,32,128), num_classes=num_classes,
+                if_selayer=if_selayer, if_mixup=if_mixup)
+
+
+def dpn131(num_classes=2, if_selayer=False, if_mixup=False):
+    return DPN(num_init_features=128, k_R=160, G=40, k_sec=(4,8,28,3), inc_sec=(16,32,32,128), num_classes=num_classes,
+                if_selayer=if_selayer, if_mixup=if_mixup)
+
+
+def dpn107(num_classes=2, if_selayer=False, if_mixup=False):
+    return DPN(num_init_features=128, k_R=200, G=50, k_sec=(4,8,20,3), inc_sec=(20,64,64,128), num_classes=num_classes,
+                if_selayer=if_selayer, if_mixup=if_mixup)
