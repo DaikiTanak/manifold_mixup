@@ -27,7 +27,7 @@ model = dpn98(if_mixup=True)
 - Otherwise, let parameter:if_mixup be False.
 
 ### Start training.
-```
+``` python
 optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True, dampening=0, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[40, 60, 80], gamma=0.1)
 
